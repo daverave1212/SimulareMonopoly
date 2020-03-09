@@ -1,10 +1,18 @@
 
+let seedrandom = require('seedrandom')
+let rng = null
+
 Board = []
 
+let config = require('./entry-data.json')
+if (config.rng == 'seedrandom')
+    rng = seedrandom(config.seed)
+else
+    rng = Math.random
 
-
-function randomInt(low, high) { return Math.floor(Math.random() * (high - low)) + low }
+function randomInt(low, high) { return Math.floor(rng() * (high - low)) + low }
 function d6() { return randomInt(1, 7) }
+function log(message) { if (config.verbose) console.log(message) }
 
 class BoardTile {
     constructor (name, color) {
@@ -17,48 +25,62 @@ class BoardTile {
     }
 }
 
-new BoardTile('GO', 'white')
-new BoardTile('Old Kent Road', 'brown')
-new BoardTile('Community Chest', 'white')
-new BoardTile('Whitechapel Road', 'brown')
-new BoardTile('Income Tax', 'white')
-new BoardTile('Kings Cross Station', 'black')
-new BoardTile('The Angel, Islington', 'teal')
-new BoardTile('Chance', 'white')
-new BoardTile('Euston Road', 'teal')
-new BoardTile('Pentounville Road', 'teal')
-new BoardTile('Jail', 'white')
-new BoardTile('Pall Mall', 'magenta')
-new BoardTile('Electric Company', 'gold')
-new BoardTile('Whitehall', 'magenta')
-new BoardTile('Northumrl\'d Avenue', 'magenta')
-new BoardTile('Marylebone Station', 'black')
-new BoardTile('Bow Street', 'orange')
-new BoardTile('Community Chest', 'white')
-new BoardTile('Marlborough Street', 'orange')
-new BoardTile('Vine Street', 'orange')
-new BoardTile('Free Parking', 'white')
-new BoardTile('Strand', 'red')
-new BoardTile('Chance', 'white')
-new BoardTile('Fleet Street', 'red')
-new BoardTile('Trafalgar Square', 'red')
-new BoardTile('Fenchurch ST. Station', 'black')
-new BoardTile('Leicester Square', 'yellow')
-new BoardTile('Coventry Street', 'yellow')
-new BoardTile('Water WOrks', 'gold')
-new BoardTile('Piccadilly', 'yellow')
-new BoardTile('Go To Jail', 'white')
-new BoardTile('Regent Street', 'green')
-new BoardTile('Oxford Street', 'green')
-new BoardTile('Community Chest', 'white')
-new BoardTile('Bond Street', 'green')
-new BoardTile('Liverpool ST. Station', 'black')
-new BoardTile('Chance', 'white')
-new BoardTile('Park Lane', 'blue')
-new BoardTile('Super Tax', 'white')
-new BoardTile('Mayfair', 'blue')
+(function() {   // Board
+    new BoardTile('GO', 'white')
+    new BoardTile('Old Kent Road', 'brown')
+    new BoardTile('Community Chest', 'white')
+    new BoardTile('Whitechapel Road', 'brown')
+    new BoardTile('Income Tax', 'white')
+    new BoardTile('Kings Cross Station', 'black')
+    new BoardTile('The Angel, Islington', 'teal')
+    new BoardTile('Chance', 'white')
+    new BoardTile('Euston Road', 'teal')
+    new BoardTile('Pentounville Road', 'teal')
+    new BoardTile('Jail', 'white')
+    new BoardTile('Pall Mall', 'magenta')
+    new BoardTile('Electric Company', 'gold')
+    new BoardTile('Whitehall', 'magenta')
+    new BoardTile('Northumrl\'d Avenue', 'magenta')
+    new BoardTile('Marylebone Station', 'black')
+    new BoardTile('Bow Street', 'orange')
+    new BoardTile('Community Chest', 'white')
+    new BoardTile('Marlborough Street', 'orange')
+    new BoardTile('Vine Street', 'orange')
+    new BoardTile('Free Parking', 'white')
+    new BoardTile('Strand', 'red')
+    new BoardTile('Chance', 'white')
+    new BoardTile('Fleet Street', 'red')
+    new BoardTile('Trafalgar Square', 'red')
+    new BoardTile('Fenchurch ST. Station', 'black')
+    new BoardTile('Leicester Square', 'yellow')
+    new BoardTile('Coventry Street', 'yellow')
+    new BoardTile('Water WOrks', 'gold')
+    new BoardTile('Piccadilly', 'yellow')
+    new BoardTile('Go To Jail', 'white')
+    new BoardTile('Regent Street', 'green')
+    new BoardTile('Oxford Street', 'green')
+    new BoardTile('Community Chest', 'white')
+    new BoardTile('Bond Street', 'green')
+    new BoardTile('Liverpool ST. Station', 'black')
+    new BoardTile('Chance', 'white')
+    new BoardTile('Park Lane', 'blue')
+    new BoardTile('Super Tax', 'white')
+    new BoardTile('Mayfair', 'blue')
+})()
 
+function resetBoard(){
+    for (let tile of Board) {
+        tile.owner = null
+    }
+}
 
+function resetPlayers(){
+    for (let player of Players) {
+        player.position = 0   // On board
+        player.ownedTiles = []
+        player.nTurnsTaken = 0
+    }
+}
 
 function getAllTilesWithColor(color) { return Board.filter(tile => tile.color == color) }
 
@@ -97,24 +119,24 @@ class Player {
 
     takeTurn() {
         this.nTurnsTaken ++
-        // console.log(`${this.name}'s turn:'`)
+        log(`${this.name}'s turn:'`)
         let tilesToMove = d6() + d6()
         this.position += tilesToMove
         if(this.position >= Board.length){
             this.position -= Board.length
         }
         let thisTile = Board[this.position]
-        //console.log(`Moves ${tilesToMove} and lands on ${thisTile.name}...`)
+        log(`Moves ${tilesToMove} and lands on ${thisTile.name}...`)
         if (thisTile.owner == null && thisTile.isBuyable)
             this.buyTile(thisTile)
         else if (thisTile.isBuyable){
-            // console.log(`    Tile is already owned by ${thisTile.owner.name}!`)
+            log(`    Tile is already owned by ${thisTile.owner.name}!`)
         }
         else {
-            // console.log(`    Nothing to do.`)
+            log(`    Nothing to do.`)
         }
         if (this.doIHaveMonopoly(thisTile)) {
-            // alert(`${this.name} wins the game and owns all ${thisTile.color} tiles!`)
+            log(`${this.name} wins the game and owns all ${thisTile.color} tiles!`)
             return true
         } else {
             return false
@@ -122,7 +144,7 @@ class Player {
     }
 
     buyTile(tile) {
-        //console.log(`    Buys tile ${tile.name}! (${tile.color})`)
+        log(`    Buys tile ${tile.name}! (${tile.color})`)
         tile.owner = this
         this.ownedTiles.push(tile)
     }
@@ -130,32 +152,31 @@ class Player {
     doIHaveMonopoly(tile) {
         let color = tile.color
         if (color == 'white') {
-            //console.log('   Not ownable.')
+            log('   Not ownable.')
             return false
         }
         let owner = getAllTilesWithColor(color).filter( tile => tile.owner != null )
         if (owner.length == 0) {
-            //console.log('    Not owned at all')
+            log('    Not owned at all')
             return false
         }
         owner = owner[0].owner
         if (owner != this) {
-            //console.log(`    Owner ${owner.name} not the same as ${this.name}`)
+            log(`    Owner ${owner.name} not the same as ${this.name}`)
         }
         let nTotalTilesOfColor = getAllTilesWithColor(color).length
         let nTilesOfColorOwned = getAllTilesWithColor(color).filter( tile => tile.owner == owner ).length
         if (nTotalTilesOfColor == nTilesOfColorOwned) return true
         else {
-            //console.log(`    I just dont own all :(`)
+            log(`    I just dont own all :(`)
             return false
         }
     }
 }
 
-new Player('David')
-new Player('Ludovic')
-// new Player('Archibald')
-// new Player('Bob')
+for (let player of config.players) {
+    new Player(player.name)
+}
 
 let Data = {
     rawData: [],
@@ -169,6 +190,29 @@ let Data = {
 
 
 function runTest(runNumber){
+    function endWithDraw(){
+        Data.rawData.push({
+            nPlayers: Players.length,
+            winnerPlayerIndex: null,
+            winnerColor: null
+        })
+        Data.nDraws ++
+        Data.nRuns ++
+    }
+    function endWithWinner(winner){
+        Data.rawData.push({
+            nPlayers: Players.length,
+            winnerPlayerIndex: winner.index,
+            winnerColor: Board[winner.position].color
+        })
+        Data.winsByColor[Board[winner.position].color] ++
+        Data.nTotalWins ++
+        Data.nRuns ++
+    }
+
+    resetBoard()
+    resetPlayers()
+    let roundIndex = 0
     while (true) {
         let winner = null
         for (let player of Players) {
@@ -179,33 +223,21 @@ function runTest(runNumber){
             }
         }
         if (areAllTilesOwned()) {
-            //console.log('Draw!')
-            /*Data.rawData.push({
-                nPlayers: Players.length,
-                winnerPlayerIndex: null,
-                winnerColor: null
-            })*/
-            Data.nDraws ++
-            Data.nRuns ++
+            log('Draw at the end of round ' + roundIndex)
+            endWithDraw()
             break
         }
         if (winner != null) {
-            /*Data.rawData.push({
-                nPlayers: Players.length,
-                winnerPlayerIndex: winner.index,
-                winnerColor: Board[winner.position].color
-            })*/
-            Data.winsByColor[Board[winner.position].color] ++
-            Data.nTotalWins ++
-            Data.nRuns ++
+            endWithWinner(winner)
             break
         }
+        roundIndex++
     }
-    console.log(`Run ${runNumber} finished.`)
+    console.log(`Run ${runNumber} finished with ${roundIndex} loops.`)
 }
 
-let nRuns = 1000000
-for (let i = 1; i<=nRuns; i++) {
+
+for (let i = 1; i<=config.nRuns; i++) {
     runTest(i)
 }
 

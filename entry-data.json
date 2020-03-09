@@ -1,0 +1,13 @@
+{
+    "players" : [
+        { "name" : "Alice" },
+        { "name" : "Bob" },
+        { "name" : "Carl" },
+        { "name" : "David" },
+        { "name" : "Erika" }
+    ],
+    "rng" : "Math.random",
+    "seed" : "math.random",
+    "nRuns" : 100000,
+    "verbose" : false
+}
